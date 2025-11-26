@@ -3,325 +3,460 @@
 <head>
   <meta charset="UTF-8" />
   <title>Träningslogg</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <style>
-    body { font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif; margin: 0; padding: 1rem; background: #0f172a; color: #e5e7eb; }
-    h1 { font-size: 1.5rem; margin-bottom: 0.5rem; }
-    .tabs { display: flex; gap: 0.5rem; margin-bottom: 1rem; flex-wrap: wrap; }
-    .tab {
-      padding: 0.4rem 0.8rem;
-      border-radius: 999px;
-      border: 1px solid #4b5563;
-      cursor: pointer;
+    :root {
+      color-scheme: dark;
+      --bg: #050814;
+      --bg-card: #070c1b;
+      --bg-card-alt: #0b1224;
+      --accent: #3b82f6;
+      --accent-soft: rgba(59,130,246,0.15);
+      --text: #e5e7eb;
+      --text-muted: #9ca3af;
+      --danger: #ef4444;
+      --border: #111827;
+      --radius-lg: 16px;
+      --radius-md: 10px;
+      --shadow-soft: 0 18px 40px rgba(0,0,0,0.45);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: radial-gradient(circle at top, #0b1120 0, #020617 55%, #020617 100%);
+      color: var(--text);
+    }
+
+    .page {
+      max-width: 1080px;
+      margin: 0 auto;
+      padding: 24px 16px 40px;
+    }
+
+    h1 {
+      font-size: 1.9rem;
+      margin: 0 0 4px;
+    }
+
+    .subtitle {
+      color: var(--text-muted);
       font-size: 0.9rem;
-      background: #020617;
+      margin-bottom: 20px;
     }
-    .tab.active { background: #22c55e; color: #022c22; border-color: #16a34a; font-weight: 600; }
+
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1.1fr) minmax(0, 1.2fr);
+      gap: 18px;
+    }
+
+    @media (max-width: 880px) {
+      .layout {
+        grid-template-columns: minmax(0, 1fr);
+      }
+    }
+
     .card {
-      background: #020617;
-      border-radius: 0.75rem;
-      padding: 1rem;
-      margin-bottom: 1rem;
-      border: 1px solid #1f2937;
-      box-shadow: 0 10px 25px rgba(0,0,0,0.35);
+      background: linear-gradient(145deg, var(--bg-card), var(--bg-card-alt));
+      border-radius: var(--radius-lg);
+      border: 1px solid rgba(15, 23, 42, 0.9);
+      padding: 14px 16px 16px;
+      box-shadow: var(--shadow-soft);
+      position: relative;
+      overflow: hidden;
     }
-    .exercise-list { display: flex; flex-direction: column; gap: 0.5rem; margin-bottom: 1rem; }
-    .exercise-item {
-      padding: 0.5rem 0.75rem;
-      border-radius: 0.5rem;
-      border: 1px solid #1f2937;
+
+    .card h2 {
+      margin: 0 0 4px;
+      font-size: 1.05rem;
+    }
+
+    .label {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--text-muted);
+      margin-bottom: 4px;
+    }
+
+    .small {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+
+    .tabs {
+      display: flex;
+      gap: 6px;
+      margin-bottom: 10px;
+      flex-wrap: wrap;
+    }
+
+    .tab {
+      padding: 5px 10px;
+      border-radius: 999px;
+      font-size: 0.8rem;
+      border: 1px solid rgba(30,64,175,0.6);
+      background: transparent;
+      color: var(--text-muted);
       cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.15s ease;
+    }
+
+    .tab-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 999px;
+      background: rgba(96, 165, 250, 0.6);
+    }
+
+    .tab.active {
+      background: radial-gradient(circle at top left, rgba(96,165,250,0.4), rgba(15,23,42,0.9));
+      color: #e5f0ff;
+      border-color: rgba(129,140,248,0.8);
+      box-shadow: 0 0 0 1px rgba(59,130,246,0.3);
+    }
+
+    .section-title {
+      font-size: 0.9rem;
+      margin: 10px 0 6px;
+    }
+
+    .exercise-list {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      max-height: 420px;
+      overflow-y: auto;
+      padding-right: 4px;
+      margin-top: 4px;
+    }
+
+    .exercise-item {
+      border-radius: var(--radius-md);
+      border: 1px solid rgba(15,23,42,0.9);
+      background: rgba(15,23,42,0.7);
+      padding: 7px 9px;
       display: flex;
       justify-content: space-between;
       align-items: center;
-      background: #020617;
-    }
-    .exercise-item.active { border-color: #22c55e; background: #022c22; }
-    .badge { font-size: 0.75rem; padding: 0.1rem 0.4rem; border-radius: 999px; border: 1px solid #4b5563; }
-    .small { font-size: 0.85rem; color: #9ca3af; }
-    .form-row { display: flex; gap: 0.5rem; margin-bottom: 0.5rem; }
-    label { font-size: 0.8rem; color: #9ca3af; }
-    input {
-      width: 100%;
-      padding: 0.4rem 0.5rem;
-      border-radius: 0.5rem;
-      border: 1px solid #374151;
-      background: #020617;
-      color: #e5e7eb;
-      font-size: 0.9rem;
-    }
-    button {
-      border: none;
-      border-radius: 999px;
-      padding: 0.45rem 0.9rem;
       cursor: pointer;
+      transition: all 0.12s ease;
+    }
+
+    .exercise-item:hover {
+      border-color: rgba(59,130,246,0.7);
+      background: radial-gradient(circle at left, rgba(37,99,235,0.2), rgba(15,23,42,0.95));
+      transform: translateY(-1px);
+    }
+
+    .exercise-item.active {
+      border-color: var(--accent);
+      background: radial-gradient(circle at left, rgba(59,130,246,0.32), rgba(15,23,42,0.96));
+      box-shadow: 0 0 0 1px rgba(59,130,246,0.4);
+    }
+
+    .exercise-name {
       font-size: 0.9rem;
     }
-    .btn-primary { background: #22c55e; color: #052e16; font-weight: 600; }
-    .btn-secondary { background: #111827; color: #e5e7eb; border: 1px solid #4b5563; }
-    .pill { border-radius: 999px; padding: 0.2rem 0.6rem; font-size: 0.75rem; background: #111827; }
-    .row-space { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem; }
-    .status { font-size: 0.8rem; margin-top: 0.25rem; color: #9ca3af; }
+
+    .pill {
+      font-size: 0.7rem;
+      border-radius: 999px;
+      padding: 1px 7px;
+      border: 1px solid rgba(148,163,184,0.5);
+      color: var(--text-muted);
+      white-space: nowrap;
+    }
+
+    .selected-exercise {
+      margin-top: 6px;
+      padding: 10px 10px 9px;
+      border-radius: 12px;
+      background: radial-gradient(circle at top left, rgba(59,130,246,0.15), rgba(15,23,42,0.95));
+      border: 1px solid rgba(37,99,235,0.7);
+    }
+
+    .selected-exercise-name {
+      font-size: 1rem;
+      font-weight: 600;
+    }
+
+    .selected-extra {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+
+    .muted {
+      color: var(--text-muted);
+      font-size: 0.8rem;
+    }
+
+    .badge {
+      font-size: 0.68rem;
+      padding: 1px 6px;
+      border-radius: 999px;
+      border: 1px solid rgba(148,163,184,0.6);
+      color: #9ca3af;
+    }
+
+    .empty-state {
+      margin-top: 6px;
+      padding: 10px;
+      border-radius: 10px;
+      border: 1px dashed rgba(51,65,85,0.9);
+      color: var(--text-muted);
+      font-size: 0.8rem;
+      background: rgba(15,23,42,0.7);
+    }
   </style>
 </head>
 <body>
-  <h1>Träningslogg</h1>
-  <p class="small">Logga vikt, set och reps. Se föregående pass per övning.</p>
+  <div class="page">
+    <header style="margin-bottom: 18px;">
+      <h1>Träningslogg</h1>
+      <div class="subtitle">Logga vikt, set och reps. Se föregående pass per övning (kommer snart). Just nu kopplar vi bara in övningslistan från Google Sheets.</div>
+    </header>
 
-  <div class="tabs" id="muscleTabs"></div>
+    <div class="layout">
+      <!-- Vänster: muskelgrupp & lista -->
+      <section class="card" id="exerciseCard">
+        <div class="label">Pass / flikar</div>
+        <div id="tabs" class="tabs"></div>
 
-  <div class="card">
-    <div class="row-space">
-      <div>
-        <div class="small">Vald muskelgrupp</div>
-        <div id="currentMuscle" style="font-weight:600;">–</div>
-      </div>
-      <div>
-        <span class="pill" id="sessionLabel"></span>
-      </div>
-    </div>
+        <div class="label" style="margin-top: 8px;">Valt pass</div>
+        <div id="currentGroupLabel" class="small">–</div>
 
-    <div>
-      <div class="small" style="margin-bottom:0.25rem;">Övningar</div>
-      <div id="exerciseList" class="exercise-list"></div>
-    </div>
-  </div>
+        <div class="section-title">Övningar</div>
+        <div id="exerciseList" class="exercise-list"></div>
 
-  <div class="card" id="exerciseCard" style="display:none;">
-    <div class="row-space">
-      <div>
-        <div class="small">Aktiv övning</div>
-        <div id="exerciseName" style="font-weight:600;"></div>
-      </div>
-      <div id="exerciseMeta" class="small"></div>
-    </div>
-
-    <div style="margin-top:0.75rem;">
-      <div class="small">Föregående pass</div>
-      <div id="lastPerformance">Ingen logg hittad än.</div>
-    </div>
-
-    <hr style="border-color:#1f2937; margin:0.75rem 0;" />
-
-    <div>
-      <div class="small" style="margin-bottom:0.25rem;">Logga nytt set</div>
-      <div class="form-row">
-        <div>
-          <label>Set nr</label>
-          <input type="number" id="setNumber" min="1" value="1" />
+        <div id="exerciseListEmpty" class="empty-state" style="display:none;">
+          Inga övningar hittades för det här passet. Kontrollera <strong>default_day</strong> i <em>Exercises</em>-arket.
         </div>
-        <div>
-          <label>Vikt (kg)</label>
-          <input type="number" id="weight" step="0.5" />
+
+        <div id="loadingState" class="empty-state">
+          Hämtar övningar från Google Sheets via Make …
         </div>
-        <div>
-          <label>Reps</label>
-          <input type="number" id="reps" />
+
+      </section>
+
+      <!-- Höger: vald övning (placeholder för loggning) -->
+      <section class="card">
+        <h2>Vald övning</h2>
+        <div id="selectedExerciseBox" class="selected-exercise" style="display:none;">
+          <div class="selected-exercise-name" id="selectedExerciseName"></div>
+          <div class="selected-extra" id="selectedExerciseMeta"></div>
         </div>
-      </div>
-      <div class="form-row">
-        <div>
-          <label>RIR (valfritt)</label>
-          <input type="number" id="rir" min="0" max="5" />
+        <div id="noExerciseSelected" class="empty-state">
+          Välj en övning i listan till vänster för att se detaljer och (senare) logga set/reps.
         </div>
-        <div style="display:flex;align-items:flex-end;gap:0.5rem;">
-          <button class="btn-secondary" id="btnUseLast">Använd föregående</button>
-          <button class="btn-primary" id="btnSaveSet">Spara set</button>
+
+        <div style="margin-top: 14px;">
+          <div class="label">Status</div>
+          <div id="statusText" class="muted">Väntar på data …</div>
         </div>
-      </div>
-      <div class="status" id="statusMsg"></div>
+      </section>
     </div>
   </div>
 
   <script>
-const GET_EXERCISES_URL = https://hook.eu1.make.com/miwhojysjdj59j9wy5cos6dttot8v91h;
-async function testLoadExercises() {
-  try {
-    const res = await fetch(GET_EXERCISES_URL, {
-      method: "POST"
-    });
-    const data = await res.json();
-    console.log("DATA FRÅN MAKE:", data);
-  } catch (err) {
-    console.error("Fel när vi hämtade övningar", err);
-  }
-}
+    // ===========================
+    // KONFIG
+    // ===========================
+    const GET_EXERCISES_URL = https://hook.eu1.make.com/miwhojysjdj59j9wy5cos6dttot8v91h; // 
 
-// Kör detta när sidan laddas
-window.addEventListener("load", testLoadExercises);
-
-    // === KONFIGURATION ===
-    const LOG_WEBHOOK_URL = "https://hook.eu1.make.com/DITT_LOG_WORKOUT_WEBHOOK";
-    const LAST_WEBHOOK_URL = "https://hook.eu1.make.com/DITT_GET_LAST_WEBHOOK";
-
-    // Här mappar vi dina övningar. Senare kan detta komma från Sheets via Make.
-    const EXERCISES = [
-      // Shoulders/Triceps dag
-      { id: 1, name: "Military press", muscle_group: "Axlar", groupKey: "axlar_triceps" },
-      { id: 2, name: "Cable lateral raises", muscle_group: "Axlar", groupKey: "axlar_triceps" },
-      { id: 3, name: "Rear delt flyes", muscle_group: "Axlar/Baksida", groupKey: "axlar_triceps" },
-      { id: 4, name: "Face pulls", muscle_group: "Baksida axel", groupKey: "axlar_triceps" },
-      { id: 5, name: "Tricep rope pushdown", muscle_group: "Triceps", groupKey: "axlar_triceps" },
-      { id: 6, name: "Overhead tricep extension", muscle_group: "Triceps", groupKey: "axlar_triceps" },
-      { id: 7, name: "EZ-bar curls", muscle_group: "Biceps", groupKey: "bröst_biceps" },
-      { id: 8, name: "Hammer curls", muscle_group: "Biceps", groupKey: "bröst_biceps" },
-      // Lägg till fler här (rygg/bröst/ben/bål)
-    ];
-
-    const MUSCLE_GROUP_TABS = [
-      { key: "axlar_triceps", label: "Axlar/Triceps" },
-      { key: "rygg", label: "Rygg" },
-      { key: "bröst_biceps", label: "Bröst/Biceps" },
-      { key: "ben_core", label: "Ben/Core" },
-    ];
-
-    let currentGroupKey = MUSCLE_GROUP_TABS[0].key;
+    // ===========================
+    // STATE
+    // ===========================
+    let EXERCISES = [];          // Fylls från API
+    let MUSCLE_GROUP_TABS = [];  // { key: "Pass 1", label: "Pass 1" }
+    let currentGroupKey = null;
     let currentExercise = null;
-    let lastSetForExercise = null;
 
-    // En enkel session-id per dag
-    const today = new Date();
-    const sessionId = today.toISOString().slice(0,10) + "-lunch";
-    document.getElementById("sessionLabel").textContent = "Session: " + sessionId;
-
-    // Bygg tabs
-    const tabsContainer = document.getElementById("muscleTabs");
+    // ===========================
+    // DOM-referenser
+    // ===========================
+    const tabsEl = document.getElementById("tabs");
     const exerciseListEl = document.getElementById("exerciseList");
-    const currentMuscleEl = document.getElementById("currentMuscle");
+    const currentGroupLabelEl = document.getElementById("currentGroupLabel");
+    const selectedExerciseBoxEl = document.getElementById("selectedExerciseBox");
+    const selectedExerciseNameEl = document.getElementById("selectedExerciseName");
+    const selectedExerciseMetaEl = document.getElementById("selectedExerciseMeta");
+    const noExerciseSelectedEl = document.getElementById("noExerciseSelected");
+    const statusTextEl = document.getElementById("statusText");
+    const exerciseListEmptyEl = document.getElementById("exerciseListEmpty");
+    const loadingStateEl = document.getElementById("loadingState");
 
+    // ===========================
+    // Render funktioner
+    // ===========================
     function renderTabs() {
-      tabsContainer.innerHTML = "";
+      tabsEl.innerHTML = "";
+
+      if (!MUSCLE_GROUP_TABS.length) {
+        tabsEl.innerHTML = '<span class="small">Inga pass hittades.</span>';
+        return;
+      }
+
       MUSCLE_GROUP_TABS.forEach(tab => {
         const btn = document.createElement("button");
+        btn.type = "button";
         btn.className = "tab" + (tab.key === currentGroupKey ? " active" : "");
-        btn.textContent = tab.label;
+        btn.innerHTML = '<span class="tab-dot"></span>' + tab.label;
         btn.onclick = () => {
           currentGroupKey = tab.key;
+          currentExercise = null;
           renderTabs();
           renderExerciseList();
+          renderSelectedExercise();
         };
-        tabsContainer.appendChild(btn);
+        tabsEl.appendChild(btn);
       });
-
-      const active = MUSCLE_GROUP_TABS.find(t => t.key === currentGroupKey);
-      currentMuscleEl.textContent = active ? active.label : "–";
     }
 
     function renderExerciseList() {
       exerciseListEl.innerHTML = "";
-      const filtered = EXERCISES.filter(ex => ex.groupKey === currentGroupKey);
+
+      if (!currentGroupKey) {
+        currentGroupLabelEl.textContent = "–";
+        exerciseListEmptyEl.style.display = "block";
+        return;
+      }
+
+      currentGroupLabelEl.textContent = currentGroupKey;
+
+      const filtered = EXERCISES.filter(ex => ex.default_day === currentGroupKey);
+
+      if (!filtered.length) {
+        exerciseListEmptyEl.style.display = "block";
+        return;
+      }
+      exerciseListEmptyEl.style.display = "none";
+
       filtered.forEach(ex => {
         const item = document.createElement("div");
-        item.className = "exercise-item" + (currentExercise && currentExercise.id === ex.id ? " active" : "");
+        const isActive = currentExercise && currentExercise.exercise_id === ex.exercise_id;
+        item.className = "exercise-item" + (isActive ? " active" : "");
         item.onclick = () => {
           currentExercise = ex;
-          showExerciseCard();
-          fetchLastSet(ex.id);
+          renderExerciseList();
+          renderSelectedExercise();
         };
 
         const left = document.createElement("div");
-        left.innerHTML = `<div>${ex.name}</div><div class="small">${ex.muscle_group}</div>`;
+        left.style.display = "flex";
+        left.style.flexDirection = "column";
+
+        const nameDiv = document.createElement("div");
+        nameDiv.className = "exercise-name";
+        nameDiv.textContent = ex.name;
+
+        const subDiv = document.createElement("div");
+        subDiv.className = "small";
+        subDiv.textContent = ex.muscle_group;
+
+        left.appendChild(nameDiv);
+        left.appendChild(subDiv);
+
         const right = document.createElement("div");
-        right.innerHTML = `<span class="badge">ID: ${ex.id}</span>`;
+        right.style.display = "flex";
+        right.style.flexDirection = "column";
+        right.style.alignItems = "flex-end";
+        right.style.gap = "4px";
+
+        const unitSpan = document.createElement("span");
+        unitSpan.className = "pill";
+        unitSpan.textContent = ex.default_unit || "kg";
+
+        const idSpan = document.createElement("span");
+        idSpan.className = "badge";
+        idSpan.textContent = `ID ${ex.exercise_id}`;
+
+        right.appendChild(unitSpan);
+        right.appendChild(idSpan);
+
         item.appendChild(left);
         item.appendChild(right);
         exerciseListEl.appendChild(item);
       });
     }
 
-    function showExerciseCard() {
-      const card = document.getElementById("exerciseCard");
-      const nameEl = document.getElementById("exerciseName");
-      const metaEl = document.getElementById("exerciseMeta");
-      const statusEl = document.getElementById("statusMsg");
-      card.style.display = "block";
-      nameEl.textContent = currentExercise.name;
-      metaEl.textContent = currentExercise.muscle_group;
-      statusEl.textContent = "";
-      document.getElementById("lastPerformance").textContent = "Hämtar föregående pass...";
-    }
-
-    async function fetchLastSet(exerciseId) {
-      lastSetForExercise = null;
-      try {
-        const res = await fetch(LAST_WEBHOOK_URL, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ exercise_id: exerciseId })
-        });
-        const data = await res.json();
-        if (!data || !data.found) {
-          document.getElementById("lastPerformance").textContent = "Ingen tidigare logg för denna övning.";
-          return;
-        }
-        lastSetForExercise = data; // t.ex. { weight, reps, date, set_number }
-        document.getElementById("lastPerformance").textContent =
-          `${data.date}: ${data.weight} kg x ${data.reps} reps (set ${data.set_number})`;
-      } catch (err) {
-        document.getElementById("lastPerformance").textContent = "Kunde inte hämta föregående pass.";
-      }
-    }
-
-    async function saveSet() {
-      if (!currentExercise) return;
-      const weight = parseFloat(document.getElementById("weight").value);
-      const reps = parseInt(document.getElementById("reps").value, 10);
-      const setNumber = parseInt(document.getElementById("setNumber").value, 10) || 1;
-      const rirVal = document.getElementById("rir").value;
-      const rir = rirVal === "" ? null : parseInt(rirVal, 10);
-      const statusEl = document.getElementById("statusMsg");
-
-      if (isNaN(weight) || isNaN(reps)) {
-        statusEl.textContent = "Fyll i vikt och reps innan du sparar.";
+    function renderSelectedExercise() {
+      if (!currentExercise) {
+        selectedExerciseBoxEl.style.display = "none";
+        noExerciseSelectedEl.style.display = "block";
         return;
       }
 
-      const payload = {
-        timestamp: new Date().toISOString(),
-        session_id: sessionId,
-        exercise_id: currentExercise.id,
-        exercise_name: currentExercise.name,
-        muscle_group: currentExercise.muscle_group,
-        set_number: setNumber,
-        weight,
-        reps,
-        rir
-      };
+      selectedExerciseBoxEl.style.display = "block";
+      noExerciseSelectedEl.style.display = "none";
 
-      statusEl.textContent = "Sparar...";
+      selectedExerciseNameEl.textContent = currentExercise.name;
+      selectedExerciseMetaEl.textContent =
+        `${currentExercise.muscle_group} · ${currentExercise.default_day} · ${currentExercise.default_unit}`;
+    }
+
+    // ===========================
+    // Ladda övningar från API
+    // ===========================
+    async function loadExercisesFromApi() {
+      statusTextEl.textContent = "Hämtar övningar från API …";
+      loadingStateEl.style.display = "block";
+
       try {
-        const res = await fetch(LOG_WEBHOOK_URL, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload)
-        });
+        const res = await fetch(GET_EXERCISES_URL, { method: "POST" });
         const data = await res.json();
-        if (data && data.status === "ok") {
-          statusEl.textContent = "Set sparat ✅";
-          // auto-öka setnummer
-          document.getElementById("setNumber").value = setNumber + 1;
-        } else {
-          statusEl.textContent = "Något gick fel vid sparande.";
+        console.log("DATA FRÅN MAKE:", data);
+
+        // rows kan vara antingen array eller objekt med 0,1,2… som nycklar
+        const rawRows = Array.isArray(data.rows)
+          ? data.rows
+          : Object.values(data.rows);
+
+        EXERCISES = rawRows.map(r => ({
+          exercise_id: Number(r["0"]),
+          name: r["1"],
+          muscle_group: r["2"],
+          default_day: r["3"],
+          default_unit: r["4"],
+          is_active: String(r["5"]).toUpperCase() === "TRUE"
+        })).filter(e => e.is_active);
+
+        if (!EXERCISES.length) {
+          statusTextEl.textContent = "Inga aktiva övningar hittades. Kontrollera is_active i Google Sheets.";
+          loadingStateEl.style.display = "none";
+          renderTabs();
+          renderExerciseList();
+          return;
         }
+
+        // Bygg flikar utifrån default_day
+        const days = [...new Set(EXERCISES.map(e => e.default_day))].filter(Boolean);
+        MUSCLE_GROUP_TABS = days.map(day => ({ key: day, label: day }));
+        currentGroupKey = MUSCLE_GROUP_TABS[0]?.key || null;
+
+        statusTextEl.textContent = `Hämtade ${EXERCISES.length} övningar från Google Sheets.`;
+        loadingStateEl.style.display = "none";
+
+        renderTabs();
+        renderExerciseList();
+        renderSelectedExercise();
       } catch (err) {
-        statusEl.textContent = "Kunde inte kontakta servern.";
+        console.error("Fel vid hämtning av övningar:", err);
+        statusTextEl.textContent = "Kunde inte hämta övningar från API. Kolla konsolen för detaljer.";
+        loadingStateEl.style.display = "none";
       }
     }
 
-    function useLastValues() {
-      if (!lastSetForExercise) return;
-      document.getElementById("weight").value = lastSetForExercise.weight;
-      document.getElementById("reps").value = lastSetForExercise.reps;
-      document.getElementById("rir").value = lastSetForExercise.rir ?? "";
-    }
-
-    document.getElementById("btnSaveSet").onclick = saveSet;
-    document.getElementById("btnUseLast").onclick = useLastValues;
-
     // Init
-    renderTabs();
-    renderExerciseList();
+    window.addEventListener("load", loadExercisesFromApi);
   </script>
 </body>
 </html>
-
