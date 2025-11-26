@@ -134,6 +134,22 @@
   </div>
 
   <script>
+const GET_EXERCISES_URL = https://hook.eu1.make.com/miwhojysjdj59j9wy5cos6dttot8v91h;
+async function testLoadExercises() {
+  try {
+    const res = await fetch(GET_EXERCISES_URL, {
+      method: "POST"
+    });
+    const data = await res.json();
+    console.log("DATA FRÅN MAKE:", data);
+  } catch (err) {
+    console.error("Fel när vi hämtade övningar", err);
+  }
+}
+
+// Kör detta när sidan laddas
+window.addEventListener("load", testLoadExercises);
+
     // === KONFIGURATION ===
     const LOG_WEBHOOK_URL = "https://hook.eu1.make.com/DITT_LOG_WORKOUT_WEBHOOK";
     const LAST_WEBHOOK_URL = "https://hook.eu1.make.com/DITT_GET_LAST_WEBHOOK";
@@ -308,3 +324,4 @@
   </script>
 </body>
 </html>
+
