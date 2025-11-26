@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+  <meta charset="UTF-8" />
+  <title>Träningslogg</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <style>
+    body { font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif; margin: 0; padding: 1rem; background: #0f172a; color: #e5e7eb; }
+    h1 { font-size: 1.5rem; margin-bottom: 0.5rem; }
+    .tabs { display: flex; gap: 0.5rem; margin-bottom: 1rem; flex-wrap: wrap; }
+    .tab {
+      padding: 0.4rem 0.8rem;
+      border-radius: 999px;
+      border: 1px solid #4b5563;
+      cursor: pointer;
+      font-size: 0.9rem;
+      background: #020617;
+    }
+    .tab.active { background: #22c55e; color: #022c22; border-color: #16a34a; font-weight: 600; }
+    .card {
+      background: #020617;
+      border-radius: 0.75rem;
+      padding: 1rem;
+      margin-bottom: 1rem;
+      border: 1px solid #1f2937;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.35);
+    }
+    .exercise-list { display: flex; flex-direction: column; gap: 0.5rem; margin-bottom: 1rem; }
+    .exercise-item {
+      padding: 0.5rem 0.75rem;
+      border-radius: 0.5rem;
+      border: 1px solid #1f2937;
+      cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: #020617;
+    }
+    .exercise-item.active { border-color: #22c55e; background: #022c22; }
+    .badge { font-size: 0.75rem; padding: 0.1rem 0.4rem; border-radius: 999px; border: 1px solid #4b5563; }
+    .small { font-size: 0.85rem; color: #9ca3af; }
+    .form-row { display: flex; gap: 0.5rem; margin-bottom: 0.5rem; }
+    label { font-size: 0.8rem; color: #9ca3af; }
+    input {
+      width: 100%;
+      padding: 0.4rem 0.5rem;
+      border-radius: 0.5rem;
+      border: 1px solid #374151;
+      background: #020617;
+      color: #e5e7eb;
+      font-size: 0.9rem;
+    }
+    button {
+      border: none;
+      border-radius: 999px;
+      padding: 0.45rem 0.9rem;
+      cursor: pointer;
+      font-size: 0.9rem;
+    }
+    .btn-primary { background: #22c55e; color: #052e16; font-weight: 600; }
+    .btn-secondary { background: #111827; color: #e5e7eb; border: 1px solid #4b5563; }
+    .pill { border-radius: 999px; padding: 0.2rem 0.6rem; font-size: 0.75rem; background: #111827; }
+    .row-space { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem; }
+    .status { font-size: 0.8rem; margin-top: 0.25rem; color: #9ca3af; }
+  </style>
+</head>
+<body>
+  <h1>Träningslogg</h1>
+  <p class="small">Logga vikt, set och reps. Se föregående pass per övning.</p>
+
+  <div class="tabs" id="muscleTabs"></div>
+
+  <div class="card">
+    <div class="row-space">
+      <div>
+        <div class="small">Vald muskelgrupp</div>
+        <div id="currentMuscle" style="font-weight:600;">–</div>
+      </div>
+      <div>
+        <span class="pill" id="sessionLabel"></span>
+      </div>
+    </div>
+
+    <div>
+      <div class="small" style="margin-bottom:0.25rem;">Övningar</div>
+      <div id="exerciseList" class="exercise-list"></div>
+    </div>
+  </div>
+
+  <div class="card" id="exerciseCard" style="display:none;">
+    <div class="row-space">
+      <div>
+        <div class="small">Aktiv övning</div>
+        <div id="exerciseName" style="font-weight:600;"></div>
+      </div>
+      <div id="exerciseMeta" class="small"></div>
+    </div>
+
+    <div style="margin-top:0.75rem;">
+      <div class="small">Föregående pass</div>
+      <div id="lastPerformance">Ingen logg hittad än.</div>
+    </div>
+
+    <hr style="border-color:#1f2937; margin:0.75rem 0;" />
+
+    <div>
+      <div class="small" style="margin-bottom:0.25rem;">Logga nytt set</div>
+      <div class="form-row">
+        <div>
+          <label>Set nr</label>
+          <input type="number" id="setNumber" min="1" value="1" />
+        </div>
+        <div>
+          <label>Vikt (kg)</label>
+          <input type="number" id="weight" step="0.5" />
+        </div>
+        <div>
+          <label>Reps</label>
+          <input type="number" id="reps" />
+        </div>
+      </div>
+      <div class="form-row">
+        <div>
+          <label>RIR (valfritt)</label>
+          <input type="number" id="rir" min="0" max="5" />
+        </div>
+        <div style="display:flex;align-items:flex-end;gap:0.5rem;">
+          <button class="btn-secondary" id="btnUseLast">Använd föregående</button>
+          <button class="btn-primary" id="btnSaveSet">Spara set</button>
+        </div>
+      </div>
+      <div class="status" id="statusMsg"></div>
+    </div>
+  </div>
+
+  <script>
+    // === KONFIGURATION ===
+    const LOG_WEBHOOK_URL = "https://hook.eu1.make.com/DITT_LOG_WORKOUT_WEBHOOK";
+    const LAST_WEBHOOK_URL = "https://hook.eu1.make.com/DITT_GET_LAST_WEBHOOK";
+
+    // Här mappar vi dina övningar. Senare kan detta komma från Sheets via Make.
+    const EXERCISES = [
+      // Shoulders/Triceps dag
+      { id: 1, name: "Military press", muscle_group: "Axlar", groupKey: "axlar_triceps" },
+      { id: 2, name: "Cable lateral raises", muscle_group: "Axlar", groupKey: "axlar_triceps" },
+      { id: 3, name: "Rear delt flyes", muscle_group: "Axlar/Baksida", groupKey: "axlar_triceps" },
+      { id: 4, name: "Face pulls", muscle_group: "Baksida axel", groupKey: "axlar_triceps" },
+      { id: 5, name: "Tricep rope pushdown", muscle_group: "Triceps", groupKey: "axlar_triceps" },
+      { id: 6, name: "Overhead tricep extension", muscle_group: "Triceps", groupKey: "axlar_triceps" },
+      { id: 7, name: "EZ-bar curls", muscle_group: "Biceps", groupKey: "bröst_biceps" },
+      { id: 8, name: "Hammer curls", muscle_group: "Biceps", groupKey: "bröst_biceps" },
+      // Lägg till fler här (rygg/bröst/ben/bål)
+    ];
+
+    const MUSCLE_GROUP_TABS = [
+      { key: "axlar_triceps", label: "Axlar/Triceps" },
+      { key: "rygg", label: "Rygg" },
+      { key: "bröst_biceps", label: "Bröst/Biceps" },
+      { key: "ben_core", label: "Ben/Core" },
+    ];
+
+    let currentGroupKey = MUSCLE_GROUP_TABS[0].key;
+    let currentExercise = null;
+    let lastSetForExercise = null;
+
+    // En enkel session-id per dag
+    const today = new Date();
+    const sessionId = today.toISOString().slice(0,10) + "-lunch";
+    document.getElementById("sessionLabel").textContent = "Session: " + sessionId;
+
+    // Bygg tabs
+    const tabsContainer = document.getElementById("muscleTabs");
+    const exerciseListEl = document.getElementById("exerciseList");
+    const currentMuscleEl = document.getElementById("currentMuscle");
+
+    function renderTabs() {
+      tabsContainer.innerHTML = "";
+      MUSCLE_GROUP_TABS.forEach(tab => {
+        const btn = document.createElement("button");
+        btn.className = "tab" + (tab.key === currentGroupKey ? " active" : "");
+        btn.textContent = tab.label;
+        btn.onclick = () => {
+          currentGroupKey = tab.key;
+          renderTabs();
+          renderExerciseList();
+        };
+        tabsContainer.appendChild(btn);
+      });
+
+      const active = MUSCLE_GROUP_TABS.find(t => t.key === currentGroupKey);
+      currentMuscleEl.textContent = active ? active.label : "–";
+    }
+
+    function renderExerciseList() {
+      exerciseListEl.innerHTML = "";
+      const filtered = EXERCISES.filter(ex => ex.groupKey === currentGroupKey);
+      filtered.forEach(ex => {
+        const item = document.createElement("div");
+        item.className = "exercise-item" + (currentExercise && currentExercise.id === ex.id ? " active" : "");
+        item.onclick = () => {
+          currentExercise = ex;
+          showExerciseCard();
+          fetchLastSet(ex.id);
+        };
+
+        const left = document.createElement("div");
+        left.innerHTML = `<div>${ex.name}</div><div class="small">${ex.muscle_group}</div>`;
+        const right = document.createElement("div");
+        right.innerHTML = `<span class="badge">ID: ${ex.id}</span>`;
+        item.appendChild(left);
+        item.appendChild(right);
+        exerciseListEl.appendChild(item);
+      });
+    }
+
+    function showExerciseCard() {
+      const card = document.getElementById("exerciseCard");
+      const nameEl = document.getElementById("exerciseName");
+      const metaEl = document.getElementById("exerciseMeta");
+      const statusEl = document.getElementById("statusMsg");
+      card.style.display = "block";
+      nameEl.textContent = currentExercise.name;
+      metaEl.textContent = currentExercise.muscle_group;
+      statusEl.textContent = "";
+      document.getElementById("lastPerformance").textContent = "Hämtar föregående pass...";
+    }
+
+    async function fetchLastSet(exerciseId) {
+      lastSetForExercise = null;
+      try {
+        const res = await fetch(LAST_WEBHOOK_URL, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ exercise_id: exerciseId })
+        });
+        const data = await res.json();
+        if (!data || !data.found) {
+          document.getElementById("lastPerformance").textContent = "Ingen tidigare logg för denna övning.";
+          return;
+        }
+        lastSetForExercise = data; // t.ex. { weight, reps, date, set_number }
+        document.getElementById("lastPerformance").textContent =
+          `${data.date}: ${data.weight} kg x ${data.reps} reps (set ${data.set_number})`;
+      } catch (err) {
+        document.getElementById("lastPerformance").textContent = "Kunde inte hämta föregående pass.";
+      }
+    }
+
+    async function saveSet() {
+      if (!currentExercise) return;
+      const weight = parseFloat(document.getElementById("weight").value);
+      const reps = parseInt(document.getElementById("reps").value, 10);
+      const setNumber = parseInt(document.getElementById("setNumber").value, 10) || 1;
+      const rirVal = document.getElementById("rir").value;
+      const rir = rirVal === "" ? null : parseInt(rirVal, 10);
+      const statusEl = document.getElementById("statusMsg");
+
+      if (isNaN(weight) || isNaN(reps)) {
+        statusEl.textContent = "Fyll i vikt och reps innan du sparar.";
+        return;
+      }
+
+      const payload = {
+        timestamp: new Date().toISOString(),
+        session_id: sessionId,
+        exercise_id: currentExercise.id,
+        exercise_name: currentExercise.name,
+        muscle_group: currentExercise.muscle_group,
+        set_number: setNumber,
+        weight,
+        reps,
+        rir
+      };
+
+      statusEl.textContent = "Sparar...";
+      try {
+        const res = await fetch(LOG_WEBHOOK_URL, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload)
+        });
+        const data = await res.json();
+        if (data && data.status === "ok") {
+          statusEl.textContent = "Set sparat ✅";
+          // auto-öka setnummer
+          document.getElementById("setNumber").value = setNumber + 1;
+        } else {
+          statusEl.textContent = "Något gick fel vid sparande.";
+        }
+      } catch (err) {
+        statusEl.textContent = "Kunde inte kontakta servern.";
+      }
+    }
+
+    function useLastValues() {
+      if (!lastSetForExercise) return;
+      document.getElementById("weight").value = lastSetForExercise.weight;
+      document.getElementById("reps").value = lastSetForExercise.reps;
+      document.getElementById("rir").value = lastSetForExercise.rir ?? "";
+    }
+
+    document.getElementById("btnSaveSet").onclick = saveSet;
+    document.getElementById("btnUseLast").onclick = useLastValues;
+
+    // Init
+    renderTabs();
+    renderExerciseList();
+  </script>
+</body>
+</html>
